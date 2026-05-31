@@ -1,50 +1,58 @@
-# HDFC MF Generative AI Chatbot
+# HDFC MF Chatbot Assignment
 
-This project implements the assignment brief:
+This is a Streamlit chatbot built for the AIML assignment. The brief had two main parts:
 
-- Use the HDFC Mutual Fund Factsheet - June 2024 as a vector-backed document knowledge base.
-- Create a dummy customer database.
-- Answer factsheet questions through retrieval augmented generation.
-- Protect customer-specific answers with email verification and OTP-based 2FA.
+- answer questions from the HDFC Mutual Fund Factsheet - June 2024
+- answer customer-specific questions only after email and OTP verification
 
-## Tech Stack
+I kept these as two separate flows in the app because factsheet data is public document data, while customer data should be protected.
 
-- Streamlit for the chatbot UI
-- pypdf for PDF extraction
-- scikit-learn TF-IDF vectors as the local vector store
-- SQLite seeded from CSV files for dummy customer data
-- Optional Gemini or OpenAI integration for generated answers
+## What The App Does
 
-The app works without an API key using an extractive fallback. Add a Gemini or OpenAI key for more natural final answers.
+For factsheet questions, the app reads the PDF from the `data` folder, extracts the text, breaks it into chunks, and searches those chunks using a local TF-IDF based retrieval index. The retrieved context is then passed to Gemini so the final answer is generated from the factsheet content. The response also shows source page numbers.
+
+For customer questions, the app first checks whether the user is authenticated. If not, it asks for a registered email in the sidebar, generates a dummy OTP, and verifies the OTP before showing customer details. The customer data is dummy data stored in CSV files and loaded into SQLite.
+
+## Main Files
+
+- `app.py` - Streamlit UI and chat flow
+- `src/document_rag.py` - PDF extraction, chunking, and factsheet retrieval
+- `src/llm.py` - Gemini/OpenAI answer generation with a local fallback
+- `src/customer_db.py` - dummy customer database lookup and response formatting
+- `src/auth.py` - OTP generation and validation
+- `src/router.py` - decides whether a query is for the factsheet or customer database
+- `data/customers.csv` - dummy customer records
+- `data/holdings.csv` - dummy customer holdings
+- `data/HDFC MF Factsheet -  June 2024.pdf` - factsheet used for document Q&A
+
+## Tech Used
+
+- Python
+- Streamlit
+- pypdf
+- scikit-learn TF-IDF
+- SQLite
+- Google Gemini 2.5 Flash
+- python-dotenv
+
+The app can still run without an LLM key, but the factsheet answers are better when `GOOGLE_API_KEY` is configured.
 
 ## Setup
+
+Install dependencies:
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-The app looks for the factsheet in either:
+Create a local `.env` file:
 
-- `data/HDFC MF Factsheet -  June 2024.pdf`
-- `C:\Users\Aryan Shukla.000\Downloads\HDFC MF Factsheet -  June 2024.pdf`
-
-You can also set:
-
-```powershell
-$env:FACTSHEET_PATH="C:\Users\Aryan Shukla.000\Downloads\HDFC MF Factsheet -  June 2024.pdf"
+```env
+GOOGLE_API_KEY=your_google_api_key
+GOOGLE_MODEL=gemini-2.5-flash
 ```
 
-Optional LLM key:
-
-```powershell
-$env:GOOGLE_API_KEY="your_key"
-```
-
-or
-
-```powershell
-$env:OPENAI_API_KEY="your_key"
-```
+Do not commit `.env`. It is already ignored in `.gitignore`.
 
 ## Run
 
@@ -52,20 +60,28 @@ $env:OPENAI_API_KEY="your_key"
 streamlit run app.py
 ```
 
+The app should open at:
+
+```text
+http://localhost:8501
+```
+
 ## Demo Questions
 
-Factsheet questions:
+Factsheet:
 
 - What is the investment objective of HDFC Infrastructure Fund?
+- What is the benchmark of HDFC Infrastructure Fund?
 - Who manages HDFC Balanced Advantage Fund?
-- What is the exit load mentioned in the factsheet?
 - Explain SIP as per the factsheet.
+- What is NAV?
 
-Customer questions:
+Customer:
 
 - What is my current portfolio value?
 - What is my folio number?
 - Show my holdings.
+- What is my SIP amount?
 - What was my last transaction?
 
 Sample registered emails:
@@ -74,15 +90,21 @@ Sample registered emails:
 - `richa.tiwari@example.com`
 - `omkar.dhavalikar@example.com`
 
-## 2FA Flow
+## 2FA Demo Flow
 
-1. Ask a customer-specific question.
+1. Ask a customer question, for example: `What is my current portfolio value?`
 2. Enter a registered email in the sidebar.
-3. Click **Send OTP**.
-4. Read the generated OTP in the dummy email outbox.
-5. Enter OTP and click **Verify OTP**.
-6. The chatbot returns the customer-specific answer.
+3. Click `Send OTP`.
+4. Copy the OTP from the dummy email outbox.
+5. Enter the OTP and click `Verify OTP`.
+6. Ask the customer question again, or continue with another customer query.
+
+## Validation
+
+I tested the chatbot across document retrieval, source page checks, routing, invalid email handling, wrong OTP, correct OTP, customer data retrieval, and live Gemini responses.
+
+Local stress scripts were used during development, but the `scripts/` folder is ignored because those files are only for local testing.
 
 ## Notes
 
-This is a demo assignment project. OTP delivery is intentionally simulated through a dummy email outbox instead of a real email provider.
+The OTP email is simulated through the sidebar outbox. This is intentional for the assignment demo and avoids connecting a real email service.
