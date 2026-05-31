@@ -149,7 +149,7 @@ def _extract_line(context: str, prefix: str) -> str:
     for line in context.splitlines():
         if line.startswith(prefix):
             return line
-    return "The requested customer detail is not available in the dummy database."
+    return "The requested customer detail is not available in the customer records."
 
 
 def _extract_holdings(context: str) -> str:

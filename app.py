@@ -161,7 +161,7 @@ def init_session() -> None:
         "pending_customer_query": None,
         "otp_state": None,
         "authenticated_customer_id": None,
-        "dummy_outbox": [],
+        "simulated_outbox": [],
     }
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)
@@ -245,7 +245,7 @@ def render_outbox_item(item: dict | str) -> None:
 
 
 def render_sidebar(pdf_path: Path | None) -> None:
-    st.sidebar.header("Assignment Controls")
+    st.sidebar.header("Control Panel")
 
     if pdf_path:
         render_side_card("Factsheet", f"Loaded: {pdf_path.name}", "success")
@@ -269,13 +269,13 @@ def render_sidebar(pdf_path: Path | None) -> None:
     if st.sidebar.button("Send OTP"):
         customer = find_customer_by_email(email)
         if not customer:
-            st.sidebar.error("Email ID not found in dummy customer DB.")
+            st.sidebar.error("Email ID not found in customer records.")
         else:
             otp_state = create_otp_state(customer["email"], customer["customer_id"])
             st.session_state.otp_state = otp_state
             st.session_state.authenticated_customer_id = None
-            st.session_state.dummy_outbox.append({"email": customer["email"], "otp": otp_state["otp"]})
-            st.sidebar.success("OTP sent to dummy email outbox.")
+            st.session_state.simulated_outbox.append({"email": customer["email"], "otp": otp_state["otp"]})
+            st.sidebar.success("OTP generated in the simulated email outbox.")
 
     submitted_otp = st.sidebar.text_input("OTP", type="password")
     if st.sidebar.button("Verify OTP"):
@@ -291,10 +291,10 @@ def render_sidebar(pdf_path: Path | None) -> None:
         else:
             st.sidebar.error(message)
 
-    if st.session_state.dummy_outbox:
+    if st.session_state.simulated_outbox:
         st.sidebar.divider()
-        st.sidebar.subheader("Dummy Email Outbox")
-        for item in st.session_state.dummy_outbox[-3:]:
+        st.sidebar.subheader("Simulated Email Outbox")
+        for item in st.session_state.simulated_outbox[-3:]:
             render_outbox_item(item)
 
     st.sidebar.divider()
@@ -309,12 +309,12 @@ def main() -> None:
     pdf_path = get_factsheet_path()
 
     st.title("HDFC MF Generative AI Chatbot")
-    st.caption("Factsheet RAG + dummy customer database + 2FA flow")
+    st.caption("Factsheet RAG + customer data access + 2FA flow")
 
     render_sidebar(pdf_path)
 
     if not pdf_path:
-        st.warning("Factsheet PDF is missing. The customer 2FA demo still works, but document Q&A needs the PDF.")
+        st.warning("Factsheet PDF is missing. Customer authentication still works, but document Q&A needs the PDF.")
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):

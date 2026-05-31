@@ -1,28 +1,28 @@
-# HDFC MF Chatbot Assignment
+# HDFC MF Generative AI Chatbot
 
-This is a Streamlit chatbot built for the AIML assignment. The brief had two main parts:
+This project implements a document-aware financial chatbot with two protected data paths:
 
 - answer questions from the HDFC Mutual Fund Factsheet - June 2024
 - answer customer-specific questions only after email and OTP verification
 
-I kept these as two separate flows in the app because factsheet data is public document data, while customer data should be protected.
+The system keeps these as separate flows because factsheet data is public document data, while customer data needs an authentication boundary.
 
 ## What The App Does
 
 For factsheet questions, the app reads the PDF from the `data` folder, extracts the text, breaks it into chunks, and searches those chunks using a local TF-IDF based retrieval index. The retrieved context is then passed to Gemini so the final answer is generated from the factsheet content. The response also shows source page numbers.
 
-For customer questions, the app first checks whether the user is authenticated. If not, it asks for a registered email in the sidebar, generates a dummy OTP, and verifies the OTP before showing customer details. The customer data is dummy data stored in CSV files and loaded into SQLite.
+For customer questions, the app first checks whether the user is authenticated. If not, it asks for a registered email in the sidebar, generates an OTP in a simulated email outbox, and verifies the OTP before showing customer details. The customer records are sample records stored in CSV files and loaded into SQLite.
 
 ## Main Files
 
 - `app.py` - Streamlit UI and chat flow
 - `src/document_rag.py` - PDF extraction, chunking, and factsheet retrieval
-- `src/llm.py` - Gemini/OpenAI answer generation with a local fallback
-- `src/customer_db.py` - dummy customer database lookup and response formatting
+- `src/llm.py` - Gemini/OpenAI answer generation with retrieval fallback
+- `src/customer_db.py` - customer database lookup and response formatting
 - `src/auth.py` - OTP generation and validation
 - `src/router.py` - decides whether a query is for the factsheet or customer database
-- `data/customers.csv` - dummy customer records
-- `data/holdings.csv` - dummy customer holdings
+- `data/customers.csv` - sample customer records
+- `data/holdings.csv` - sample customer holdings
 - `data/HDFC MF Factsheet -  June 2024.pdf` - factsheet used for document Q&A
 
 ## Tech Used
@@ -66,7 +66,7 @@ The app should open at:
 http://localhost:8501
 ```
 
-## Demo Questions
+## Example Queries
 
 Factsheet:
 
@@ -90,11 +90,11 @@ Sample registered emails:
 - `richa.tiwari@example.com`
 - `omkar.dhavalikar@example.com`
 
-## 2FA Demo Flow
+## 2FA Flow
 
 1. Ask a customer question, for example: `What is my current portfolio value?`
 2. Enter a registered email in the sidebar.
 3. Click `Send OTP`.
-4. Copy the OTP from the dummy email outbox.
+4. Copy the OTP from the simulated email outbox.
 5. Enter the OTP and click `Verify OTP`.
 6. Ask the customer question again, or continue with another customer query.
