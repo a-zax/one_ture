@@ -6,3 +6,4 @@ data/customers.db
 vector_store/
 .env
 scripts/
+docs/
