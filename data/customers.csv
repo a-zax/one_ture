@@ -1,0 +1,4 @@
+customer_id,name,email,folio_number,pan_masked,phone_masked,risk_profile,total_invested,current_value,sip_amount,last_transaction
+CUST001,Aryan Shukla,aryan.shukla@example.com,HDFC123456,ABCDE****F,******4321,Moderate,250000,318450,10000,"SIP of Rs. 10000 in HDFC Flexi Cap Fund on 2026-05-05"
+CUST002,Richa Tiwari,richa.tiwari@example.com,HDFC789012,FGHIJ****K,******9876,Aggressive,425000,512780,15000,"Lump sum of Rs. 50000 in HDFC Balanced Advantage Fund on 2026-04-18"
+CUST003,Omkar Dhavalikar,omkar.dhavalikar@example.com,HDFC345678,KLMNO****P,******2468,Conservative,180000,196250,5000,"SIP of Rs. 5000 in HDFC Corporate Bond Fund on 2026-05-10"

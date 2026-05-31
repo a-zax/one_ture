@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.streamlit.log
+.streamlit.err.log
+data/customers.db
+vector_store/
+.env
+scripts/

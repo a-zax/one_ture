@@ -1,0 +1,9 @@
+customer_id,scheme_name,category,units,nav,current_value,invested_amount
+CUST001,HDFC Flexi Cap Fund,Equity,125.42,1189.04,149122,110000
+CUST001,HDFC Balanced Advantage Fund,Hybrid,315.70,357.12,112734,90000
+CUST001,HDFC Liquid Fund,Debt,56.81,996.20,56594,50000
+CUST002,HDFC Small Cap Fund,Equity,182.15,152.41,27760,25000
+CUST002,HDFC Infrastructure Fund,Thematic Equity,710.50,384.28,272995,210000
+CUST002,HDFC Balanced Advantage Fund,Hybrid,594.20,357.12,212025,190000
+CUST003,HDFC Corporate Bond Fund,Debt,620.00,21.95,13609,13000
+CUST003,HDFC Banking and PSU Debt Fund,Debt,3420.00,54.27,185603,167000
