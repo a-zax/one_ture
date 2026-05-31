@@ -98,13 +98,3 @@ Sample registered emails:
 4. Copy the OTP from the dummy email outbox.
 5. Enter the OTP and click `Verify OTP`.
 6. Ask the customer question again, or continue with another customer query.
-
-## Validation
-
-I tested the chatbot across document retrieval, source page checks, routing, invalid email handling, wrong OTP, correct OTP, customer data retrieval, and live Gemini responses.
-
-Local stress scripts were used during development, but the `scripts/` folder is ignored because those files are only for local testing.
-
-## Notes
-
-The OTP email is simulated through the sidebar outbox. This is intentional for the assignment demo and avoids connecting a real email service.
