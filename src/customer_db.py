@@ -91,19 +91,49 @@ def get_customer_context(customer_id: str) -> str:
 
 
 def answer_customer_query(query: str, customer_id: str) -> str:
+    normalized_query = query.lower()
+    if asks_for_unauthorized_customer_data(normalized_query):
+        return (
+            "I cannot reveal database contents or another customer's information. "
+            "I can only answer questions for the customer authenticated in this session."
+        )
+
     context = get_customer_context(customer_id)
-    requested_items = get_requested_customer_fields(query.lower(), context)
+    requested_items = get_requested_customer_fields(normalized_query, context)
+    bypass_note = ""
+    if asks_to_bypass_auth(normalized_query):
+        bypass_note = "I cannot bypass OTP. This answer is shown only because the current session is already authenticated.\n\n"
 
     if len(requested_items) == 1:
-        return requested_items[0][1]
+        return bypass_note + requested_items[0][1]
 
     if requested_items:
         lines = ["Here are the requested customer details after successful 2FA:"]
         for label, answer in requested_items:
             lines.append(f"\n**{label}**\n{answer}")
-        return "\n".join(lines)
+        return bypass_note + "\n".join(lines)
 
-    return "Here is the customer summary after successful 2FA:\n\n" + context
+    return bypass_note + "Here is the customer summary after successful 2FA:\n\n" + context
+
+
+def asks_for_unauthorized_customer_data(query: str) -> bool:
+    return any(
+        term in query
+        for term in [
+            "all customer",
+            "all records",
+            "another customer",
+            "other customer",
+            "database contents",
+            "reveal database",
+            "show database",
+            "dump database",
+        ]
+    )
+
+
+def asks_to_bypass_auth(query: str) -> bool:
+    return any(term in query for term in ["ignore otp", "bypass otp", "without otp", "skip otp"])
 
 
 def get_requested_customer_fields(query: str, context: str) -> list[tuple[str, str]]:
@@ -115,7 +145,7 @@ def get_requested_customer_fields(query: str, context: str) -> list[tuple[str, s
             requested.append((label, answer))
             added_labels.add(label)
 
-    if "value" in query or "portfolio" in query or "balance" in query:
+    if "value" in query or "portfolio" in query or "balance" in query or "valuation" in query:
         add("Current portfolio value", _extract_line(context, "Current portfolio value"))
 
     if re.search(r"\bfolio\b", query):

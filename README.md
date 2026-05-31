@@ -9,7 +9,7 @@ The system keeps these as separate flows because factsheet data is public docume
 
 ## What The App Does
 
-For factsheet questions, the app reads the PDF from the `data` folder, extracts the text, breaks it into chunks, and searches those chunks using a local TF-IDF based retrieval index. The retrieved context is then passed to Gemini so the final answer is generated from the factsheet content. The response also shows source page numbers.
+For factsheet questions, the app reads the PDF from the `data` folder, extracts the text, breaks it into chunks, and searches those chunks using a local TF-IDF based retrieval index. The retrieved context is then passed to the configured LLM provider so the final answer is generated from the factsheet content. The response also shows source page numbers.
 
 For customer questions, the app first checks whether the user is authenticated. If not, it asks for a registered email in the sidebar, generates an OTP in a simulated email outbox, and verifies the OTP before showing customer details. The customer records are sample records stored in CSV files and loaded into SQLite.
 
@@ -17,7 +17,7 @@ For customer questions, the app first checks whether the user is authenticated. 
 
 - `app.py` - Streamlit UI and chat flow
 - `src/document_rag.py` - PDF extraction, chunking, and factsheet retrieval
-- `src/llm.py` - Gemini/OpenAI answer generation with retrieval fallback
+- `src/llm.py` - Colab/Gemini/OpenAI answer generation with retrieval fallback
 - `src/customer_db.py` - customer database lookup and response formatting
 - `src/auth.py` - OTP generation and validation
 - `src/router.py` - decides whether a query is for the factsheet or customer database
@@ -33,9 +33,10 @@ For customer questions, the app first checks whether the user is authenticated. 
 - scikit-learn TF-IDF
 - SQLite
 - Google Gemini 2.5 Flash
+- optional Colab T4 open-source LLM endpoint
 - python-dotenv
 
-The app can still run without an LLM key, but the factsheet answers are better when `GOOGLE_API_KEY` is configured.
+The app can use Gemini, OpenAI, or a temporary Colab T4 endpoint running an open-source model. If no provider is available, it still returns locally retrieved factsheet snippets.
 
 ## Setup
 
@@ -52,7 +53,29 @@ GOOGLE_API_KEY=your_google_api_key
 GOOGLE_MODEL=gemini-2.5-flash
 ```
 
+Optional Colab T4 endpoint:
+
+```env
+COLAB_LLM_URL=https://your-url.trycloudflare.com
+COLAB_LLM_TIMEOUT=90
+```
+
 Do not commit `.env`. It is already ignored in `.gitignore`.
+
+## Optional Colab LLM
+
+The repo includes a Colab notebook for running an open-source model on T4 GPU:
+
+```text
+docs/Colab_T4_Open_Source_LLM.ipynb
+```
+
+Provider order:
+
+1. Colab open-source LLM, if `COLAB_LLM_URL` is set
+2. Gemini, if `GOOGLE_API_KEY` is set
+3. OpenAI, if `OPENAI_API_KEY` is set
+4. local retrieval fallback
 
 ## Run
 

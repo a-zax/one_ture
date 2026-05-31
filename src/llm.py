@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import logging
 from pathlib import Path
 
 try:
@@ -16,14 +17,43 @@ if load_dotenv:
 
 DEFAULT_GOOGLE_MODEL = "gemini-2.5-flash"
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
+DEFAULT_COLAB_TIMEOUT = 90
+LOGGER = logging.getLogger(__name__)
 
 
 def generate_document_answer(query: str, context: str) -> str:
-    provider_answer = _try_google(query, context) or _try_openai(query, context)
+    provider_answer = _try_colab_llm(query, context) or _try_google(query, context) or _try_openai(query, context)
     if provider_answer:
         return provider_answer
 
     return _fallback_answer(context)
+
+
+def _try_colab_llm(query: str, context: str) -> str | None:
+    base_url = os.getenv("COLAB_LLM_URL", "").strip()
+    if not base_url:
+        return None
+
+    try:
+        import requests
+
+        timeout = int(os.getenv("COLAB_LLM_TIMEOUT", DEFAULT_COLAB_TIMEOUT))
+        endpoint = base_url.rstrip("/")
+        if not endpoint.endswith("/generate"):
+            endpoint = f"{endpoint}/generate"
+
+        response = requests.post(
+            endpoint,
+            json={"prompt": _prompt(query, context), "query": query, "context": context},
+            timeout=timeout,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        answer = payload.get("answer") or payload.get("text")
+        return answer.strip() if answer else None
+    except Exception as exc:
+        LOGGER.warning("Colab LLM request failed: %s", exc)
+        return None
 
 
 def _try_google(query: str, context: str) -> str | None:
@@ -33,11 +63,12 @@ def _try_google(query: str, context: str) -> str | None:
 
     model_name = os.getenv("GOOGLE_MODEL", DEFAULT_GOOGLE_MODEL)
 
-    answer = _try_google_genai_sdk(api_key, model_name, query, context)
-    if answer:
-        return answer
+    try:
+        from google import genai as _genai
+    except ImportError:
+        return _try_legacy_google_sdk(api_key, model_name, query, context)
 
-    return _try_legacy_google_sdk(api_key, model_name, query, context)
+    return _try_google_genai_sdk(api_key, model_name, query, context)
 
 
 def _try_google_genai_sdk(api_key: str, model_name: str, query: str, context: str) -> str | None:
@@ -52,8 +83,9 @@ def _try_google_genai_sdk(api_key: str, model_name: str, query: str, context: st
         return response.text.strip() if response.text else None
     except ImportError:
         return None
-    except Exception:
-        return _provider_fallback("Gemini is configured but the request failed. Check GOOGLE_API_KEY and GOOGLE_MODEL.")
+    except Exception as exc:
+        LOGGER.warning("Gemini request failed through google-genai: %s", exc)
+        return None
 
 
 def _try_legacy_google_sdk(api_key: str, model_name: str, query: str, context: str) -> str | None:
@@ -66,8 +98,9 @@ def _try_legacy_google_sdk(api_key: str, model_name: str, query: str, context: s
         return response.text.strip()
     except ImportError:
         return None
-    except Exception:
-        return _provider_fallback("Gemini is configured but the request failed. Check GOOGLE_API_KEY and GOOGLE_MODEL.")
+    except Exception as exc:
+        LOGGER.warning("Gemini request failed through legacy SDK: %s", exc)
+        return None
 
 
 def _try_openai(query: str, context: str) -> str | None:
@@ -89,8 +122,9 @@ def _try_openai(query: str, context: str) -> str | None:
             temperature=0.2,
         )
         return response.choices[0].message.content.strip()
-    except Exception:
-        return _provider_fallback("OpenAI is configured but the request failed. Check OPENAI_API_KEY and OPENAI_MODEL.")
+    except Exception as exc:
+        LOGGER.warning("OpenAI request failed: %s", exc)
+        return None
 
 
 def _prompt(query: str, context: str) -> str:
@@ -121,11 +155,7 @@ def _fallback_answer(context: str) -> str:
         compact.append(snippet)
 
     return (
-        "I found the following relevant factsheet content. Add a Gemini or OpenAI API key for a more polished generated answer.\n\n"
+        "The LLM provider is unavailable right now, so I am using local factsheet retrieval for this answer.\n\n"
         + "\n\n".join(compact)
         + "\n\nNote: Mutual fund investments are subject to market risks. This is not investment advice."
     )
-
-
-def _provider_fallback(message: str) -> str:
-    return f"{message}\n\nThe app is falling back to local factsheet retrieval for this answer."

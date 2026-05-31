@@ -203,6 +203,13 @@ def handle_customer_query(query: str) -> str:
     return "This looks like a customer-specific query. Please enter your registered email ID in the 2FA panel to continue."
 
 
+def handle_security_query() -> str:
+    return (
+        "I cannot reveal database contents, bypass authentication, or show another customer's information. "
+        "Please ask factsheet questions or authenticated questions about the current customer only."
+    )
+
+
 def render_side_card(label: str, value: str, style: str = "") -> None:
     st.sidebar.markdown(
         f"""
@@ -333,6 +340,8 @@ def main() -> None:
         with st.spinner("Thinking..."):
             if route == "customer":
                 answer = handle_customer_query(query)
+            elif route == "security":
+                answer = handle_security_query()
             elif pdf_path:
                 answer = handle_document_query(query, pdf_path)
             else:
